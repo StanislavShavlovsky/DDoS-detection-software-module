@@ -2,12 +2,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 def class_distribution(dataset, class_column):
-    """
-    Функция для вывода распределения классов в датасете.
 
-    Возвращает:
-    (распечатывает общее количество строк, распределение классов и строит график)
-    """
     class_counts = dataset[class_column].value_counts()
     total_samples = dataset.shape[0]
     unique_classes = dataset[class_column].nunique()
@@ -29,10 +24,8 @@ def class_distribution(dataset, class_column):
     plt.tight_layout()
     plt.show()
 
-# Пример использования
-# Предположим, что у вас есть датасет в формате CSV с именем "dataset.csv",
-# где у классов информация находится в столбце с именем "class"
-# Загружаем датасет
+
 dataset = pd.read_csv("D:\downloads\ML-EdgeIIoT-dataset.csv") # можем указывать путь к любому другому датасету
-# Вызываем функцию для анализа распределения классов
-class_distribution(dataset, "Attack_type") # указываем столбец, в котором перечислены все виды классов датасета
+
+class_distribution(dataset, "Attack_type")
+
