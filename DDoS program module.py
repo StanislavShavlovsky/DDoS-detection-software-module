@@ -1,44 +1,44 @@
-import tkinter as tk  # Импортируем модуль для создания графического интерфейса
-from tkinter import ttk  # Импортируем ttk для улучшения стиля виджетов
-from tkinter import messagebox, filedialog  # Импортируем модули для диалоговых окон
-import threading  # Импортируем threading для работы с многопоточностью
-import logging  # Импортируем logging для ведения журнала
-import datetime  # Импортируем datetime для работы с датой и временем
-import os  # Импортируем os для работы с операционной системой
-import pickle  # Импортируем pickle для сериализации объектов
-import time  # Импортируем time для работы со временем
-import pandas as pd  # Импортируем pandas для работы с данными в формате таблицы
-import ipaddress  # Импортируем ipaddress для работы с IP-адресами
-import socket  # Импортируем socket для работы с сокетами
-from collections import defaultdict  # Импортируем defaultdict для работы с данными по умолчанию
-from sklearn.model_selection import train_test_split  # Импортируем train_test_split для разделения данных на обучающие и тестовые
-from sklearn.ensemble import RandomForestClassifier  # Импортируем RandomForestClassifier для обучения модели случайного леса
-from scapy.layers.inet import IP  # Импортируем IP из scapy для работы с пакетами IP
-from scapy.layers.l2 import Ether  # Импортируем Ether из scapy для работы с пакетами Ethernet
-from sklearn.preprocessing import LabelEncoder  # Импортируем LabelEncoder для кодирования категориальных признаков
-import subprocess  # Импортируем subprocess для выполнения внешних команд
-import csv  # Импортируем csv для работы с файлами CSV
+import tkinter as tk  
+from tkinter import ttk  
+from tkinter import messagebox, filedialog  
+import threading  
+import logging  
+import datetime  
+import os  
+import pickle  
+import time  
+import pandas as pd  
+import ipaddress  
+import socket  
+from collections import defaultdict  
+from sklearn.model_selection import train_test_split  
+from sklearn.ensemble import RandomForestClassifier  
+from scapy.layers.inet import IP  
+from scapy.layers.l2 import Ether  
+from sklearn.preprocessing import LabelEncoder  
+import subprocess  
+import csv  
 import socket
 
 
-# Класс для хранения данных о сетевом трафике
+
 class DataStore:
     def __init__(self):
         self.store = dict()
 
-    # Метод для записи данных события в хранилище
+
     def write(self, event):
         ip = event['ip_addr_src']
         if ip not in self.store:
             self.store[ip] = {'time_create': datetime.datetime.now(), 'total_fwd_packets': 0}
         self.store[ip]['total_fwd_packets'] += 1
 
-    # Метод для чтения всех данных из хранилища
+   
     def read_all(self):
         return self.store
 
 
-# Функция для мониторинга сетевого трафика
+# мониторинг сетевого трафика
 def monitor_traffic(iface, text_widget):
     # Настройки мониторинга трафика
     base_traffic_rate = 1000
@@ -50,7 +50,7 @@ def monitor_traffic(iface, text_widget):
     start_time = time.time()
     packets_received = 0
 
-    # Установка сокета для прослушивания сетевого интерфейса
+
     with socket.socket(socket.AF_PACKET, socket.SOCK_RAW, socket.htons(0x0800)) as sock:
         sock.bind((iface, 0))
         while True:
@@ -60,27 +60,27 @@ def monitor_traffic(iface, text_widget):
             packet_type = ip_header[9]
 
             packets_received += 1
-            # Проверка интервала времени для расчета скорости трафика
+    
             if time.time() - start_time >= traffic_interval:
                 traffic_rate = packets_received / traffic_interval
                 packets_received = 0
                 start_time = time.time()
-                # Проверка на увеличение скорости трафика
+                
                 if traffic_rate > base_traffic_rate:
                     text_widget.insert(tk.END, "**Внимание:** Обнаружено внезапное увеличение трафика!\n")
                     text_widget.see(tk.END)
-                # Подсчет количества пакетов для каждого IP-адреса
+                
                 ip_counts[ip_src] += 1
                 if ip_counts[ip_src] > ip_threshold:
                     text_widget.insert(tk.END, f"**Внимание:** Подозрительная активность с IP-адреса {ip_src}\n")
                     text_widget.see(tk.END)
                     apply_ddos_protection(ip_src)
-                # Проверка на тип атакующего пакета
+                
                 if packet_type in attack_packet_types:
                     text_widget.insert(tk.END, f"**Внимание:** Обнаружен подозрительный тип пакета: {packet_type}\n")
                     text_widget.see(tk.END)
 
-# Класс для сниффинга сетевого трафика
+# сниффинг сетевого трафика
 class Sniffer:
     def __init__(self, interface, store, excluded_ips):
         self.interface = interface
@@ -88,7 +88,6 @@ class Sniffer:
         self.excluded_ips = excluded_ips
         self.sniff = threading.Thread(target=self.pkt_callback)
 
-    # Метод обработки сниффера
     def pkt_callback(self):
         with socket.socket(socket.AF_PACKET, socket.SOCK_RAW, socket.htons(0x0800)) as sock:
             sock.bind((self.interface, 0))
@@ -128,16 +127,16 @@ class Sniffer:
                             }
                             self.store.write(event)
 
-    # Метод для запуска сниффера
+    
     def start(self):
         self.sniff.start()
 
-    # Метод для остановки сниффера
+    
     def stop(self):
         self.sniff.join()
 
 
-# Класс для анализа событий
+
 class Analytics:
     def __init__(self, store, count_max_events, check_time, model, anomaly_threshold):
         self.store = store
@@ -148,13 +147,13 @@ class Analytics:
         self.last_log_time = time.time()
         self.prev_traffic_rate = 0
 
-    # Метод для проверки событий
+    
     def check(self, text_widget):
         while True:
             time.sleep(self.check_time)
             self.analyze_traffic(text_widget)
 
-    # Метод для анализа сетевого трафика
+    
     def analyze_traffic(self, text_widget):
         current_time = time.time()
         elapsed_time = current_time - self.last_log_time
@@ -177,7 +176,6 @@ class Analytics:
             text_widget.insert(tk.END, 'Компьютер поддвергается DDoS-атака\n')
             text_widget.see(tk.END)
 
-    # Метод для обнаружения увеличения трафика
     def detect_traffic_increase(self):
         current_traffic_rate = self.calculate_traffic_rate()
         if current_traffic_rate > self.prev_traffic_rate:
@@ -187,12 +185,12 @@ class Analytics:
             self.prev_traffic_rate = current_traffic_rate
             return False
 
-    # Метод для расчета скорости трафика
+    
     def calculate_traffic_rate(self):
         total_packets = sum(data['total_fwd_packets'] for data in self.store.read_all().values())
         traffic_rate = total_packets / self.check_time
         return traffic_rate
-    # Метод для обнаружения аномалий
+    
     def detect_anomalies(self):
         anomalies_found = False
         for ip, data in list(self.store.read_all().items()):
@@ -203,7 +201,7 @@ class Analytics:
                     anomalies_found = True
                     apply_ddos_protection(ip)
         return anomalies_found
-# Метод для применения защиты от DDoS-атак
+
 def apply_ddos_protection(ip_address):
     command = f"sudo iptables -A INPUT -s {ip_address} -j DROP"
     try:
@@ -212,7 +210,6 @@ def apply_ddos_protection(ip_address):
     except subprocess.CalledProcessError as e:
         logging.error(f"Ошибка при применении защиты: {e}")
 
-# Класс для модели
 class Model:
     def __init__(self, model_path, data_path, create_model=True):
         self.model_path = model_path
@@ -221,13 +218,13 @@ class Model:
             self.create_model(data_path)
         self.load_model()
 
-    # Метод для создания меток
+    
     def create_labels(self, labels):
         encoder = LabelEncoder()
         encoder.fit(labels)
         return encoder.transform(labels)
 
-    # Метод для загрузки данных
+    
     def load_data(self, data_path):
         data = pd.read_csv(data_path)
         data = pd.get_dummies(data, sparse=True)
@@ -235,7 +232,7 @@ class Model:
         labels = data.iloc[:, -1]
         return data.iloc[:, :-1], labels
 
-    # Метод для создания модели
+    
     def create_model(self, data_path):
         data, labels = self.load_data(data_path)
         train_events, test_events, train_labels, test_labels = train_test_split(data, labels, test_size=0.2, random_state=42)
@@ -250,7 +247,7 @@ class Model:
             logging.error('File save model not found')
             exit()
 
-    # Метод для проверки события
+    
     def check_event(self, event_info):
         if not self.features:
             logging.error('Features are not defined. Model not properly initialized.')
@@ -261,7 +258,7 @@ class Model:
             return None
         return self.model.predict_proba([input_features])[0][1]
 
-# Главный класс для приложения
+
 class MainApp(tk.Tk):
     def __init__(self):
         super().__init__()
@@ -281,7 +278,7 @@ class MainApp(tk.Tk):
         self.setup_ml_tab()
         self.setup_manual_tab()
 
-    # Метод для настройки вкладки машинного обучения
+
     def setup_ml_tab(self):
         ml_frame = ttk.LabelFrame(self.ml_tab, text="Машинное обучение")
         ml_frame.grid(column=0, row=0, padx=8, pady=4, sticky='nsew')
@@ -303,7 +300,7 @@ class MainApp(tk.Tk):
         self.retrain_button = ttk.Button(ml_frame, text="Дообучить на сетевом трафике ", command=self.retrain_model)
         self.retrain_button.grid(column=0, row=3, columnspan=3, padx=8, pady=4)
 
-    # Метод для настройки вкладки ручного режима
+
     def setup_manual_tab(self):
         manual_frame = ttk.LabelFrame(self.manual_tab, text="Ручной анализ")
         manual_frame.grid(column=0, row=0, padx=8, pady=4)
@@ -320,7 +317,7 @@ class MainApp(tk.Tk):
         self.text_widget = tk.Text(manual_frame, wrap="word", height=10)
         self.text_widget.grid(column=0, row=3, columnspan=2, padx=8, pady=4)
 
-    # Метод для выбора файла модели
+
     def browse_model_file(self):
         file_path = filedialog.askopenfilename()
         if file_path:
@@ -333,7 +330,7 @@ class MainApp(tk.Tk):
             self.data_entry.delete(0, tk.END)
             self.data_entry.insert(tk.END, file_path)
 
-    # Метод для обучения модели
+
     def train_model(self):
         model_path = self.model_entry.get()
         data_path = self.data_entry.get()
@@ -351,7 +348,6 @@ class MainApp(tk.Tk):
         sniffer_thread.join()
         analytics_thread.join()
 
-    # Метод для дообучения модели
     def retrain_model(self):
         from sklearn.ensemble import IsolationForest
         from scapy.layers.inet import IP
@@ -368,19 +364,18 @@ class MainApp(tk.Tk):
             return packets
 
         def extract_features(packet):
-            # Инициализируем признаки
             features = []
 
-            # Длина пакета
+        
             features.append(len(packet))
 
-            # Протокол, если он доступен
+            
             if IP in packet:
                 features.append(packet[IP].proto)
             else:
                 features.append(-1)  # Если протокол не определен, добавляем -1
 
-            # Размерность пакетов
+        
             sizes = [len(layer) for layer in packet]
             avg_size = np.mean(sizes)
             std_size = np.std(sizes)
@@ -412,14 +407,14 @@ class MainApp(tk.Tk):
             # Сниффинг сетевого трафика для определенного количества времени
             packets = sniff_traffic_for_seconds(duration=100)  # Сниффинг в течение 30 секунд
 
-            # Извлечение признаков из пакетов
+        
             data = [extract_features(packet) for packet in packets]
 
-            # Обучение модели на извлеченных признаках
+    
             model = train_model(data)
 
             print("Начало анализа трафика...")
-            # Непрерывный анализ трафика
+        
             start_time = time.time()
             while (time.time() - start_time) < 3600:  # Примерно 1 час
                 packet = sniff(iface="eth0", count=1)[0]
@@ -431,7 +426,7 @@ class MainApp(tk.Tk):
         if __name__ == "__main__":
             main()
 
-    # Метод для начала анализа
+
     def start_analysis(self):
         print("Функция start_analysis вызвана")
         iface = self.iface_entry.get()
@@ -442,7 +437,7 @@ class MainApp(tk.Tk):
         monitor_thread.start()
         messagebox.showinfo("Информация", "Анализ сетевого трафика запущен")
 
-# Запуск приложения
+
 if __name__ == "__main__":
     logging.basicConfig(format='%(asctime)s - %(levelname)s - %(message)s', level=logging.DEBUG)
     app = MainApp()
