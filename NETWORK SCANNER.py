@@ -98,12 +98,12 @@ class Analytics:
         print(tabulate(data, headers=headers, tablefmt="grid"))
 
 
-# Создаем директорию для логов, если она не существует
+
 log_dir = 'log'
 os.makedirs(log_dir, exist_ok=True)
 
 
-# Инициализация хранилища данных
+
 data_store = DataStore()
 
 try:
@@ -114,3 +114,4 @@ try:
     analytics.start()
 except Exception as e:
     logging.error(f"Ошибка: {e}")
+
